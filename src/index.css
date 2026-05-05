@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  --color-orange-500: #06b6d4; /* Switch to Cyan for theme consistency */
+  --color-primary: #06b6d4;
+  --color-secondary: #3b82f6;
+  --color-bg-dark: #050505;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background-color: #050505;
+  color: #e2e8f0; /* slate-200 */
+  overflow: hidden;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.immersive-glow {
+  background: radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.05), transparent);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}

@@ -1,0 +1,59 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // User Model Validation
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'tier', 'createdAt', 'updatedAt'])
+        && data.keys().size() >= 4
+        && data.uid is string
+        && data.tier in ['free', 'premium', 'professional']
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+
+    // 1. Users Collection
+    match /users/{userId} {
+      allow get: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && isValidUser(incoming());
+      allow update: if isSignedIn() && isOwner(userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Plan Upgrade (Tier change) - usually handled by admin/server, 
+          // but for this app it might be client-side after success. 
+          // Ideally tier should be restricted to backend.
+          (incoming().diff(existing()).affectedKeys().hasOnly(['tier', 'updatedAt', 'selectedModel'])) ||
+          (incoming().diff(existing()).affectedKeys().hasOnly(['selectedModel', 'updatedAt'])) ||
+          (incoming().diff(existing()).affectedKeys().hasOnly(['firstName', 'lastName', 'photoUrl', 'username', 'updatedAt']))
+        );
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "App user and their subscription state",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Telegram User ID" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "username": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "tier": { "type": "string", "enum": ["free", "premium", "professional"] },
+        "selectedModel": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "tier"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    }
+  }
+}
