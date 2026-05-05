@@ -48,9 +48,10 @@ export const ChatView = () => {
   const handleSend = async () => {
     if ((!input.trim() && files.length === 0) || isLoading) return;
 
+    const currentFiles = [...files];
     let content = input;
-    if (files.length > 0) {
-      content += `\n\n📎 Yuklangan fayllar: ${files.map(f => f.name).join(", ")}`;
+    if (currentFiles.length > 0) {
+      content += `\n\n📎 Yuklangan fayllar: ${currentFiles.map(f => f.name).join(", ")}`;
     }
 
     const userMessage: Message = { role: "user", content };
@@ -61,14 +62,17 @@ export const ChatView = () => {
     haptic("light");
 
     try {
-      const response = await chatWithAI([...messages, userMessage], selectedModel);
+      const response = await chatWithAI([...messages, userMessage], selectedModel, currentFiles);
       setMessages((prev) => [...prev, { role: "assistant", content: response }]);
       haptic("success");
     } catch (error: any) {
       console.error(error);
       let errorMsg = "Xatolik yuz berdi. Iltimos keyinroq urinib ko'ring.";
+      const details = error.response?.data?.details || error.response?.data?.error;
       if (error.response?.status === 401) {
-        errorMsg = "API kaliti noto'g'ri yoki sozlanmagan. Iltimos Secrets panelini tekshiring.";
+        errorMsg = "API kaliti noto'g'ri yoki sozlanmagan. Secrets panelini tekshiring.";
+      } else if (details) {
+        errorMsg = `Xatolik: ${details}`;
       }
       setMessages((prev) => [...prev, { role: "assistant", content: errorMsg }]);
       haptic("error");

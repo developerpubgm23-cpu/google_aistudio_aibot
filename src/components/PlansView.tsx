@@ -21,11 +21,9 @@ export const PlansView = () => {
     const id = `ORDER_${Date.now()}`;
     const email = user?.username ? `${user.username}@t.me` : `id${user?.id || "unknown"}@t.me`;
     
-    const chatId = user?.id;
-    
     try {
       // Send payment link via bot directly or return URL
-      const res = await createCheckoutLink(plan.amount || 0, id, email, chatId);
+      const res = await createCheckoutLink(plan.amount || 0, id, email);
       if (res.paymentUrl) {
          tg()?.openLink(res.paymentUrl);
       }

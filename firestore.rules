@@ -40,16 +40,13 @@ service cloud.firestore {
 
     // 1. Users Collection
     match /users/{userId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId) && isValidUser(incoming());
-      allow update: if isSignedIn() && isOwner(userId)
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && isValidUser(incoming());
+      allow update: if isSignedIn()
         && incoming().uid == existing().uid
         && incoming().createdAt == existing().createdAt
         && incoming().updatedAt == request.time
         && (
-          // Plan Upgrade (Tier change) - usually handled by admin/server, 
-          // but for this app it might be client-side after success. 
-          // Ideally tier should be restricted to backend.
           (incoming().diff(existing()).affectedKeys().hasOnly(['tier', 'updatedAt', 'selectedModel'])) ||
           (incoming().diff(existing()).affectedKeys().hasOnly(['selectedModel', 'updatedAt'])) ||
           (incoming().diff(existing()).affectedKeys().hasOnly(['firstName', 'lastName', 'photoUrl', 'username', 'updatedAt']))

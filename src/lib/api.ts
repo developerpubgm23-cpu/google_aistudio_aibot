@@ -9,8 +9,25 @@ export type Message = {
   content: string;
 };
 
-export const chatWithAI = async (messages: Message[], model?: string) => {
-  const { data } = await api.post("/chat", { messages, model });
+export const fetchModels = async () => {
+  const { data } = await api.get("/models");
+  return data;
+};
+
+export const chatWithAI = async (messages: Message[], model?: string, files?: File[]) => {
+  const formData = new FormData();
+  formData.append("messages", JSON.stringify(messages));
+  if (model) formData.append("model", model);
+  
+  if (files && files.length > 0) {
+    files.forEach((file) => {
+      formData.append("files", file);
+    });
+  }
+
+  const { data } = await api.post("/chat", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return data.message;
 };
 

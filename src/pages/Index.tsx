@@ -6,13 +6,25 @@ import { ModelsView } from "../components/ModelsView";
 import { PlansView } from "../components/PlansView";
 import { SettingsView } from "../components/SettingsView";
 import { initTelegram } from "../lib/telegram";
+import { ensureAuth } from "../lib/firebase";
+import { Loader2 } from "lucide-react";
 
-const Index = () => {
+export const Index = () => {
   const [tab, setTab] = useState<Tab>("chat");
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     initTelegram();
+    ensureAuth().then(() => setIsReady(true)).catch(() => setIsReady(true));
   }, []);
+
+  if (!isReady) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-[#050505]">
+        <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-[#050505] text-slate-200 overflow-hidden">
