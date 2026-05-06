@@ -6,13 +6,22 @@ import { createServer as createViteServer } from "vite";
 import multer from "multer";
 import cors from "cors";
 
-// Initialize Groq
-const groq = new Groq({ 
-  apiKey: process.env.GROQ_API_KEY || "dummy_key" 
-});
+// Lazy Groq initialization
+let groq: Groq | null = null;
+const getGroq = () => {
+  if (!groq) {
+    groq = new Groq({ 
+      apiKey: process.env.GROQ_API_KEY || "dummy_key" 
+    });
+  }
+  return groq;
+};
 
 // Multer for file uploads
-const upload = multer({ limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB limit
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 } 
+}); // 10MB limit
 
 async function startServer() {
   const app = express();
@@ -20,6 +29,7 @@ async function startServer() {
 
   app.use(cors());
   app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
   // --- API ROUTES ---
 
@@ -27,7 +37,7 @@ async function startServer() {
   app.get("/api/models", async (req, res) => {
     try {
       if (!process.env.GROQ_API_KEY) return res.json({ data: [] });
-      const models = await groq.models.list();
+      const models = await getGroq().models.list();
       res.json(models);
     } catch (error: any) {
       console.error("Models fetch error:", error);
@@ -37,8 +47,15 @@ async function startServer() {
 
   // 2. Chat with AI (Supporting Files)
   app.post("/api/chat", upload.array("files"), async (req, res) => {
+    console.log("Chat request received:", { body: req.body, filesCount: req.files ? (req.files as any).length : 0 });
+    
     try {
       const { messages: messagesStr, model = "llama-3.3-70b-versatile" } = req.body;
+      
+      if (!messagesStr) {
+        return res.status(400).json({ error: "Missing messages in request body" });
+      }
+
       const messages = JSON.parse(messagesStr);
       
       let targetModel = model;
@@ -49,18 +66,22 @@ async function startServer() {
       }
 
       if (!process.env.GROQ_API_KEY || process.env.GROQ_API_KEY === "dummy_key") {
-        return res.status(401).json({ error: "Groq API kaliti sozlanmagan." });
+        return res.status(401).json({ error: "Groq API kaliti sozlanmagan. Iltimos Secrets panelini tekshiring." });
       }
 
-      const completion = await groq.chat.completions.create({
+      const completion = await getGroq().chat.completions.create({
         messages,
         model: targetModel,
       });
 
+      console.log("Groq response success");
       res.json({ message: completion.choices[0]?.message?.content });
     } catch (error: any) {
-      console.error("Groq Error:", error.message);
-      res.status(500).json({ error: error.message });
+      console.error("Groq Error Response:", error);
+      res.status(500).json({ 
+        error: "AI bilan aloqada xatolik yuz berdi",
+        details: error.message 
+      });
     }
   });
 

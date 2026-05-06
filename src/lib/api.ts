@@ -25,9 +25,7 @@ export const chatWithAI = async (messages: Message[], model?: string, files?: Fi
     });
   }
 
-  const { data } = await api.post("/chat", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const { data } = await api.post("/chat", formData);
   return data.message;
 };
 
